@@ -1,9 +1,14 @@
-import 'react-native-gesture-handler';
-import './global.css';
 import React from 'react';
-import AppComponent from './src/components/app/AppModule';
-
+import { AuthProvider } from './src/context/AuthContext';
+import AppNavigator from './src/navigation/AppNavigator';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function App() {
-  return <AppComponent />;
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
 }

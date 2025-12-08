@@ -59,5 +59,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     firebaseStorageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
     firebaseMessagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     firebaseAppId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
+    useOnDeviceOcr: process.env.EXPO_PUBLIC_USE_ON_DEVICE_OCR === 'true',
+    vedWebhookUrl: process.env.EXPO_PUBLIC_VEDAI_WEBHOOK_URL,
+    chatbotUrl: process.env.EXPO_PUBLIC_CHATBOT_URL || process.env.EXPO_PUBLIC_VEDAI_WEBHOOK_URL,
   }
 });

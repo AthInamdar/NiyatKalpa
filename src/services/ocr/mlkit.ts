@@ -1,4 +1,5 @@
 import { ParsedFields } from '../../config/types';
+import { parseAndNormalize } from './normalize';
 
 // ML Kit OCR implementation for Dev Client
 // This would use expo-ml-kit or similar package in a real implementation
@@ -32,31 +33,23 @@ export const mlkitParse = async (imageUri: string): Promise<ParsedFields> => {
 const parseTextToFields = (text: string): ParsedFields => {
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const result: ParsedFields = {};
-  
-  for (const line of lines) {
-    // Extract medicine name (usually the first substantial line)
-    if (!result.name && line.length > 5 && !line.includes('Batch') && !line.includes('Mfg') && !line.includes('Exp') && !line.includes('MRP')) {
-      result.name = line.replace(/tablets?|capsules?|syrup|suspension/gi, '').trim();
-    }
-    
-    // Extract batch number
-    const batchMatch = line.match(/batch\s*no?[:\s-]*([A-Z0-9]+)/i);
-    if (batchMatch) {
-      result.batchNo = batchMatch[1];
-    }
-    
-    // Extract manufacturer
-    const mfgMatch = line.match(/mfg[:\s-]*(.+)/i) || line.match(/manufacturer[:\s-]*(.+)/i);
-    if (mfgMatch) {
-      result.manufacturer = mfgMatch[1].trim();
-    }
-    
-    // Extract expiry date
-    const expMatch = line.match(/exp[:\s-]*(\d{2}\/\d{2,4}|\d{2}\/\d{4}|[A-Za-z]{3}\s?\d{4})/i);
-    if (expMatch) {
-      result.expiryDate = expMatch[1];
-    }
+
+  // Name heuristic: first substantial line without keywords
+  const nameLine = lines.find(l => l.length > 5 && !/(Batch|Mfg|MFD|Exp|Expiry|MRP|Price|Rs|₹)/i.test(l));
+  if (nameLine) {
+    result.name = nameLine.replace(/\b(tablets?|capsules?|syrup|suspension)\b/gi, '').trim();
   }
-  
+
+  // Use robust normalizer on the entire text
+  const normalized = parseAndNormalize(text);
+  if (normalized.batchNo) result.batchNo = normalized.batchNo;
+  if (normalized.mfdDate) result.mfdDate = normalized.mfdDate;
+  if (normalized.expiryDate) result.expiryDate = normalized.expiryDate;
+  if (normalized.mrp) {
+    const n = Number(normalized.mrp);
+    if (Number.isFinite(n)) result.mrp = n;
+  }
+
   return result;
 };
+

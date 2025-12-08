@@ -6,9 +6,12 @@ import { User, Location } from '../config/types';
 export interface UserProfile {
   uid: string;
   email: string;
-  role: 'user' | 'pharmacist';
+  role: 'donor' | 'ngo' | 'admin' | 'pharmacist';
   displayName: string | null;
   location: Location | null;
+  organizationType?: string;
+  registrationNumber?: string;
+  verified?: boolean;
   createdAt: any;
 }
 
@@ -16,9 +19,9 @@ export interface UserProfile {
  * Signs up a new user and automatically creates their Firestore profile document
  */
 export async function signUpAndCreateProfile(
-  email: string, 
-  password: string, 
-  role: 'user' | 'pharmacist' = 'user'
+  email: string,
+  password: string,
+  role: 'donor' | 'ngo' | 'admin' | 'pharmacist' = 'donor'
 ): Promise<string> {
   try {
     // Create Firebase Auth user
@@ -52,7 +55,7 @@ export async function getMyProfile(uid: string): Promise<UserProfile | null> {
   try {
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       return docSnap.data() as UserProfile;
     } else {

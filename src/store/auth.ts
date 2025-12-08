@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { User } from '../config/types';
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser
@@ -17,7 +17,7 @@ interface AuthState {
   isAuthenticated: boolean;
   initialize: () => void;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (userData: { name: string; email: string; password: string; role: 'pharmacist' | 'user'; phone?: string }) => Promise<void>;
+  signUp: (userData: { name: string; email: string; password: string; role: 'donor' | 'ngo' | 'admin' | 'pharmacist'; phone?: string; organizationType?: string; registrationNumber?: string }) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserData: (updates: Partial<User>) => void;
 }
@@ -41,41 +41,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               email: userProfile.email,
               role: userProfile.role,
               phone: undefined, // Will be updated from existing data if available
+              organizationType: userProfile.organizationType,
+              registrationNumber: userProfile.registrationNumber,
+              verified: userProfile.verified || false,
               location: userProfile.location || undefined,
               createdAt: userProfile.createdAt,
             };
-            
-            set({ 
-              firebaseUser, 
-              user: userData, 
-              isAuthenticated: true, 
-              isLoading: false 
+
+            set({
+              firebaseUser,
+              user: userData,
+              isAuthenticated: true,
+              isLoading: false
             });
           } else {
             // User profile doesn't exist, sign out
             console.error('User profile not found in Firestore');
-            set({ 
-              firebaseUser: null, 
-              user: null, 
-              isAuthenticated: false, 
-              isLoading: false 
+            set({
+              firebaseUser: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false
             });
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
-          set({ 
-            firebaseUser: null, 
-            user: null, 
-            isAuthenticated: false, 
-            isLoading: false 
+          set({
+            firebaseUser: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false
           });
         }
       } else {
-        set({ 
-          firebaseUser: null, 
-          user: null, 
-          isAuthenticated: false, 
-          isLoading: false 
+        set({
+          firebaseUser: null,
+          user: null,
+          isAuthenticated: false,
+          isLoading: false
         });
       }
     });
@@ -89,16 +92,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: true });
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userData = await getUser(userCredential.user.uid);
-      
+
       if (!userData) {
         throw new Error('User data not found');
       }
 
-      set({ 
-        firebaseUser: userCredential.user, 
-        user: userData, 
-        isAuthenticated: true, 
-        isLoading: false 
+      set({
+        firebaseUser: userCredential.user,
+        user: userData,
+        isAuthenticated: true,
+        isLoading: false
       });
     } catch (error) {
       set({ isLoading: false });
@@ -109,13 +112,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (userData) => {
     try {
       set({ isLoading: true });
-      
+
       // Use the new signUpAndCreateProfile function
       const uid = await signUpAndCreateProfile(userData.email, userData.password, userData.role);
-      
+
       // Get the created user profile
       const userProfile = await getMyProfile(uid);
-      
+
       if (!userProfile) {
         throw new Error('Failed to create user profile');
       }
@@ -127,15 +130,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         email: userProfile.email,
         role: userProfile.role,
         phone: userData.phone,
+        organizationType: userData.organizationType,
+        registrationNumber: userData.registrationNumber,
+        verified: false,
         location: userProfile.location || undefined,
         createdAt: userProfile.createdAt,
       };
 
-      set({ 
-        firebaseUser: auth.currentUser, 
-        user: newUser, 
-        isAuthenticated: true, 
-        isLoading: false 
+      set({
+        firebaseUser: auth.currentUser,
+        user: newUser,
+        isAuthenticated: true,
+        isLoading: false
       });
     } catch (error) {
       set({ isLoading: false });
@@ -146,11 +152,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     try {
       await firebaseSignOut(auth);
-      set({ 
-        firebaseUser: null, 
-        user: null, 
-        isAuthenticated: false, 
-        isLoading: false 
+      set({
+        firebaseUser: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false
       });
     } catch (error) {
       console.error('Error signing out:', error);
