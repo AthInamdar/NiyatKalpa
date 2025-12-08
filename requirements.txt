@@ -1,0 +1,44 @@
+# React Native/Expo Dependencies
+# This file lists the main dependencies for the NiyatKalpa project
+# Note: Most dependencies are managed through package.json for React Native
+
+# Core Expo Packages
+expo~=54.0.25
+expo-camera~=17.0.9
+expo-constants~=18.0.10
+expo-file-system~=19.0.19
+expo-font~=14.0.9
+expo-image-picker~=17.0.8
+expo-linear-gradient~=15.0.7
+expo-linking~=8.0.9
+expo-location~=19.0.7
+expo-splash-screen~=31.0.11
+expo-status-bar~=3.0.8
+
+# React Native Packages
+react-native~=74.0.0
+react-native-safe-area-context~=4.8.0
+react-native-screens~=3.31.0
+react-native-webview~=13.15.0
+react-native-worklets~=0.5.1
+
+# Navigation
+@react-navigation/native~=6.1.0
+@react-navigation/stack~=6.3.0
+@react-navigation/bottom-tabs~=6.5.0
+
+# Firebase
+firebase~=10.7.0
+
+# UI/Styling
+nativewind~=2.0.0
+tailwindcss~=3.3.0
+
+# Utilities
+react-native-toast-message~=2.2.0
+@expo/vector-icons~=14.0.0
+
+# Development Dependencies (optional)
+@types/react~=18.2.0
+@types/react-native~=0.72.0
+typescript~=5.3.0
