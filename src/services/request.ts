@@ -19,12 +19,12 @@ import { MedicineRequest, RequestStatus, Location } from '../config/types';
  * Create a new medicine request (NGO)
  */
 export const createRequest = async (requestData: {
-  medicineName: string;
-  quantity: number;
-  urgency: 'low' | 'medium' | 'high';
-  reason: string;
-  ngoName: string;
-  geo: Location;
+  title: string;
+  description: string;
+  category: string;
+  quantityNeeded: number;
+  ngoName?: string;
+  geo?: Location;
 }): Promise<string> => {
   const currentUser = auth.currentUser;
   if (!currentUser) {
@@ -116,7 +116,7 @@ export const searchRequests = async (searchTerm: string): Promise<MedicineReques
   const q = query(
     requestsRef,
     where('status', '==', 'open'),
-    orderBy('medicineName'),
+    orderBy('title'),
     limit(50)
   );
   const querySnapshot = await getDocs(q);
@@ -124,6 +124,6 @@ export const searchRequests = async (searchTerm: string): Promise<MedicineReques
   
   // Client-side filtering
   return requests.filter(request =>
-    request.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+    request.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 };

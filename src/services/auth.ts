@@ -7,7 +7,7 @@ export interface UserProfile {
   uid: string;
   email: string;
   role: 'donor' | 'ngo' | 'admin' | 'pharmacist';
-  displayName: string | null;
+  name: string | null; // Changed from displayName to match Firestore rules
   location: Location | null;
   organizationType?: string;
   registrationNumber?: string;
@@ -33,7 +33,7 @@ export async function signUpAndCreateProfile(
       uid: user.uid,
       email: user.email || email,
       role,
-      displayName: null,
+      name: null, // Changed from displayName to match Firestore rules
       location: null,
       createdAt: serverTimestamp()
     };

@@ -36,6 +36,7 @@ export default function UploadMedicineScreen() {
 
   // Form Fields
   const [medicineName, setMedicineName] = useState("");
+  const [category, setCategory] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [batchNo, setBatchNo] = useState("");
   const [mfgDate, setMfgDate] = useState("");
@@ -48,6 +49,7 @@ export default function UploadMedicineScreen() {
   const [extracting, setExtracting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<LocationCoords | null>(null);
+  const [isScanned, setIsScanned] = useState(false);
 
   // Fetch location
   useEffect(() => {
@@ -59,17 +61,40 @@ export default function UploadMedicineScreen() {
 
   // Pick image (camera or gallery)
   const pickImage = async (type: "front" | "label", useCamera: boolean = false) => {
+    // Request permissions
+    if (useCamera) {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Camera access is required to take photos of medicine labels.',
+        });
+        return;
+      }
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Photo gallery access is required to upload medicine images.',
+        });
+        return;
+      }
+    }
+
     const result = useCamera
       ? await ImagePicker.launchCameraAsync({
-          mediaTypes: "images",
-          allowsEditing: true,
-          quality: 0.8,
-        })
+        mediaTypes: "images",
+        allowsEditing: true,
+        quality: 0.8,
+      })
       : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: "images",
-          allowsEditing: true,
-          quality: 0.8,
-        });
+        mediaTypes: "images",
+        allowsEditing: true,
+        quality: 0.8,
+      });
 
     if (!result.canceled && result.assets[0]) {
       if (type === "front") setFrontImageUri(result.assets[0].uri);
@@ -105,8 +130,12 @@ export default function UploadMedicineScreen() {
       if (extractedData.manufacturer) setManufacturer(extractedData.manufacturer);
       if (extractedData.batchNo) setBatchNo(extractedData.batchNo);
       if (extractedData.mfdDate) setMfgDate(extractedData.mfdDate);
-      if (extractedData.expiryDate) setExpiryDate(extractedData.expiryDate);
+      if (extractedData.expiryDate) {
+        setExpiryDate(extractedData.expiryDate);
+        setIsScanned(true); // Disable editing after scan
+      }
       if (extractedData.mrp) setMrp(extractedData.mrp.toString());
+      if (extractedData.type) setCategory(extractedData.type);
 
       Toast.show({
         type: "success",
@@ -128,11 +157,11 @@ export default function UploadMedicineScreen() {
 
   // Upload to Firebase
   const uploadToFirebase = async () => {
-    if (!medicineName || !batchNo || !manufacturer || !quantity || !expiryDate) {
+    if (!medicineName || !batchNo || !manufacturer || !quantity || !expiryDate || !category) {
       Toast.show({
         type: "error",
         text1: "Missing fields",
-        text2: "Please fill all required fields"
+        text2: "Please fill all required fields including category"
       });
       return;
     }
@@ -157,17 +186,18 @@ export default function UploadMedicineScreen() {
       const expiryTS = Timestamp.fromDate(new Date(Number(yyyy), Number(mm) - 1));
 
       const payload = {
-        name: medicineName,
+        title: medicineName, // Changed from 'name' to 'title' per Firestore rules
+        description: description || "Medicine donation", // Required per rules
+        category, // Required per rules
+        quantity: Number(quantity),
         batchNo,
         manufacturer,
         mfgDate: mfgDate || null,
         expiryDate: expiryTS,
         mrp: mrp || null,
-        description,
-        quantity: Number(quantity),
         photos: urls,
         donorId: user?.uid,
-        donorName: user?.displayName || user?.email,
+        donorName: user?.name || user?.email, // Changed from displayName to name
         createdAt: serverTimestamp(),
         location: location ? {
           lat: location.lat,
@@ -198,10 +228,10 @@ export default function UploadMedicineScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      
+
       {/* Header */}
       <LinearGradient
-        colors={["#2563eb", "#3b82f6"]}
+        colors={['#0f766e', '#14b8a6']}
         style={{ paddingTop: insets.top + 20, paddingBottom: 30 }}
       >
         <View className="flex-row items-center px-5">
@@ -239,21 +269,21 @@ export default function UploadMedicineScreen() {
             ) : (
               <View className="flex-row gap-3">
                 <TouchableOpacity
-                  className="flex-1 rounded-xl bg-blue-50 border border-blue-300 p-4"
+                  className="flex-1 rounded-xl bg-primary-50 border border-primary-300 p-4"
                   onPress={() => pickImage("front", true)}
                 >
                   <View className="items-center">
-                    <Ionicons name="camera" size={24} color="#2563eb" />
-                    <Text className="text-blue-700 mt-1">Camera</Text>
+                    <Ionicons name="camera" size={24} color="#0d9488" />
+                    <Text className="text-primary-700 mt-1">Camera</Text>
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="flex-1 rounded-xl bg-blue-50 border border-blue-300 p-4"
+                  className="flex-1 rounded-xl bg-primary-50 border border-primary-300 p-4"
                   onPress={() => pickImage("front", false)}
                 >
                   <View className="items-center">
-                    <Ionicons name="images" size={24} color="#2563eb" />
-                    <Text className="text-blue-700 mt-1">Gallery</Text>
+                    <Ionicons name="images" size={24} color="#0d9488" />
+                    <Text className="text-primary-700 mt-1">Gallery</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -327,6 +357,13 @@ export default function UploadMedicineScreen() {
           />
 
           <TextInput
+            placeholder="Category * (e.g., Tablet, Syrup, Injection)"
+            value={category}
+            onChangeText={setCategory}
+            className="bg-gray-100 p-3 rounded-xl mb-3"
+          />
+
+          <TextInput
             placeholder="Manufacturer *"
             value={manufacturer}
             onChangeText={setManufacturer}
@@ -351,7 +388,8 @@ export default function UploadMedicineScreen() {
             placeholder="Expiry Date (MM/YYYY) *"
             value={expiryDate}
             onChangeText={setExpiryDate}
-            className="bg-gray-100 p-3 rounded-xl mb-3"
+            editable={!loading && !isScanned}
+            className={`p-3 rounded-xl mb-3 ${isScanned ? 'bg-secondary-100 text-secondary-500' : 'bg-gray-100'}`}
           />
 
           <TextInput
@@ -382,7 +420,7 @@ export default function UploadMedicineScreen() {
           <TouchableOpacity
             onPress={uploadToFirebase}
             disabled={loading}
-            className="bg-emerald-600 rounded-xl py-4 items-center"
+            className="bg-primary-600 rounded-xl py-4 items-center shadow-lg shadow-primary-500/30"
           >
             {loading ? (
               <ActivityIndicator color="white" />

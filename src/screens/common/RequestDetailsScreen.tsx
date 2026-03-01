@@ -10,7 +10,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { getRequest, updateRequest, deleteRequest } from '../../services/request';
+import { createMatch } from '../../services/matching';
 import { useAuth } from '../../context/AuthContext';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import Toast from 'react-native-toast-message';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -154,7 +157,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View className="flex-1 bg-secondary-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#0d9488" />
         <Text className="text-secondary-500 mt-4 font-medium">Loading request details...</Text>
       </View>
     );
@@ -170,7 +173,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           Request Not Found
         </Text>
         <TouchableOpacity
-          className="bg-blue-600 rounded-xl px-8 py-3 mt-4 shadow-lg shadow-blue-500/30"
+          className="bg-primary-600 rounded-xl px-8 py-3 mt-4 shadow-lg shadow-primary-500/30"
           onPress={() => navigation.goBack()}
         >
           <Text className="text-white font-bold">Go Back</Text>
@@ -186,9 +189,9 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       <StatusBar barStyle="light-content" />
 
       {/* Header Background */}
-      <View className="absolute top-0 w-full h-[30%] bg-blue-600 rounded-b-[40px] overflow-hidden z-0">
+      <View className="absolute top-0 w-full h-[30%] bg-primary-700 rounded-b-[40px] overflow-hidden z-0">
         <LinearGradient
-          colors={['#2563eb', '#3b82f6']}
+          colors={['#0f766e', '#14b8a6']}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -355,9 +358,25 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         {/* View Only Message for Non-owners */}
         {!isOwner && (
           <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-100 px-6 py-4">
-            <Text className="text-secondary-500 text-center text-sm font-medium">
-              You are viewing this request as {user?.role}
-            </Text>
+            {user?.role === 'donor' && request.status === 'open' ? (
+              <TouchableOpacity
+                className="bg-primary-600 rounded-xl py-4 items-center flex-row justify-center shadow-lg shadow-primary-500/30"
+                onPress={() => {
+                  // Simply open chat with NGO for now
+                  navigation.navigate('ChatScreen', {
+                    otherUserId: request.ngoId,
+                    otherUserName: request.ngoName || 'NGO'
+                  });
+                }}
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text className="text-white font-bold text-lg">Contact Receiver</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text className="text-secondary-500 text-center text-sm font-medium">
+                You are viewing this request as {user?.role}
+              </Text>
+            )}
           </View>
         )}
       </SafeAreaView>

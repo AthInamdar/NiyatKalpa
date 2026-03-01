@@ -6,8 +6,12 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppLogo } from '../../components/common/AppLogo';
@@ -18,6 +22,33 @@ import { AppLogo } from '../../components/common/AppLogo';
  */
 export default function ReceiverHomeScreen({ navigation }: any) {
   const { user } = useAuth();
+  const [donations, setDonations] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchDonations = async () => {
+      try {
+        const donationsRef = collection(db, 'donations');
+        const q = query(
+          donationsRef,
+          where('status', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+          limit(3)
+        );
+        const querySnapshot = await getDocs(q);
+        const donationsList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setDonations(donationsList);
+      } catch (error) {
+        console.error('Error fetching nearby donations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDonations();
+  }, []);
 
   const quickActions = [
     {
@@ -25,8 +56,8 @@ export default function ReceiverHomeScreen({ navigation }: any) {
       description: 'Submit a new request',
       icon: 'add-circle',
       onPress: () => navigation.navigate('RequestMedicine'),
-      color: 'bg-blue-50',
-      iconColor: '#2563eb',
+      color: 'bg-primary-50',
+      iconColor: '#0d9488',
       enabled: true,
     },
     {
@@ -43,8 +74,8 @@ export default function ReceiverHomeScreen({ navigation }: any) {
       description: 'Find donors nearby',
       icon: 'map',
       onPress: () => navigation.navigate('Map'),
-      color: 'bg-purple-50',
-      iconColor: '#9333ea',
+      color: 'bg-indigo-50',
+      iconColor: '#4f46e5',
       enabled: true,
     },
     {
@@ -61,7 +92,7 @@ export default function ReceiverHomeScreen({ navigation }: any) {
       description: 'Get help and guidance',
       icon: 'chatbubbles',
       onPress: () => navigation.navigate('AIVaidya'),
-      color: 'bg-teal-50',
+      color: 'bg-teal-100',
       iconColor: '#0d9488',
       enabled: true,
     },
@@ -72,9 +103,9 @@ export default function ReceiverHomeScreen({ navigation }: any) {
       <StatusBar barStyle="light-content" />
 
       {/* Header Background */}
-      <View className="absolute top-0 w-full h-[30%] bg-blue-600 rounded-b-[40px] overflow-hidden">
+      <View className="absolute top-0 w-full h-[30%] bg-primary-700 rounded-b-[40px] overflow-hidden">
         <LinearGradient
-          colors={['#2563eb', '#3b82f6']}
+          colors={['#0f766e', '#14b8a6']}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -89,11 +120,11 @@ export default function ReceiverHomeScreen({ navigation }: any) {
           <View className="px-6 pt-6 pb-8">
             <View className="flex-row justify-between items-center mb-6">
               <View>
-                <Text className="text-blue-100 text-base font-medium mb-1">
+                <Text className="text-primary-100 text-base font-medium mb-1">
                   Welcome Back,
                 </Text>
                 <Text className="text-white text-2xl font-bold tracking-tight">
-                  {user?.displayName || 'Receiver'} 👋
+                  {user?.name || 'Receiver'} 👋
                 </Text>
               </View>
               <View className="flex-row items-center gap-3">
@@ -111,7 +142,7 @@ export default function ReceiverHomeScreen({ navigation }: any) {
                   <View className="w-8 h-8 bg-white/20 rounded-full items-center justify-center mr-2">
                     <Ionicons name="time-outline" size={16} color="white" />
                   </View>
-                  <Text className="text-blue-50 text-xs font-medium">Active Requests</Text>
+                  <Text className="text-primary-50 text-xs font-medium">Active Requests</Text>
                 </View>
                 <Text className="text-white text-2xl font-bold">0</Text>
               </View>
@@ -120,7 +151,7 @@ export default function ReceiverHomeScreen({ navigation }: any) {
                   <View className="w-8 h-8 bg-white/20 rounded-full items-center justify-center mr-2">
                     <Ionicons name="checkmark-circle-outline" size={16} color="white" />
                   </View>
-                  <Text className="text-blue-50 text-xs font-medium">Fulfilled</Text>
+                  <Text className="text-primary-50 text-xs font-medium">Fulfilled</Text>
                 </View>
                 <Text className="text-white text-2xl font-bold">0</Text>
               </View>
@@ -164,20 +195,56 @@ export default function ReceiverHomeScreen({ navigation }: any) {
                 Nearby Donations
               </Text>
               <TouchableOpacity onPress={() => navigation.navigate('AvailableDonations')}>
-                <Text className="text-blue-600 font-semibold text-sm">See All</Text>
+                <Text className="text-primary-600 font-semibold text-sm">See All</Text>
               </TouchableOpacity>
             </View>
 
-            <View className="bg-white rounded-2xl p-8 shadow-sm border border-secondary-100 items-center justify-center min-h-[160px] mb-8">
-              <View className="w-16 h-16 bg-secondary-50 rounded-full items-center justify-center mb-3">
-                <Ionicons name="location-outline" size={32} color="#94a3b8" />
-              </View>
-              <Text className="text-secondary-500 font-medium text-center mb-1">
-                No donations nearby
-              </Text>
-              <Text className="text-secondary-400 text-xs text-center max-w-[200px]">
-                Check back later or submit a request
-              </Text>
+            <View className="mb-8">
+              {loading ? (
+                <View className="bg-white rounded-2xl p-8 items-center justify-center border border-secondary-100 min-h-[160px]">
+                  <ActivityIndicator color="#0d9488" />
+                </View>
+              ) : donations.length > 0 ? (
+                donations.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id || index}
+                    className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-secondary-100 flex-row items-center"
+                    onPress={() => navigation.navigate('DonationDetails', { donationId: item.id })}
+                    activeOpacity={0.7}
+                  >
+                    <View className="w-14 h-14 bg-primary-50 rounded-xl items-center justify-center mr-4">
+                      {item.photos && item.photos.length > 0 ? (
+                        <Image source={{ uri: item.photos[0] }} className="w-14 h-14 rounded-xl" />
+                      ) : (
+                        <Ionicons name="medkit-outline" size={28} color="#0d9488" />
+                      )}
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-secondary-900 font-bold text-base" numberOfLines={1}>
+                        {item.title || item.name || 'Medicine Name'}
+                      </Text>
+                      <View className="flex-row items-center mt-1">
+                        <Text className="text-secondary-500 text-xs mr-2">{item.category || 'Medicine'}</Text>
+                        <View className="w-1 h-1 bg-secondary-300 rounded-full mr-2" />
+                        <Text className="text-primary-600 text-xs font-semibold">{item.quantity} units</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <View className="bg-white rounded-2xl p-8 shadow-sm border border-secondary-100 items-center justify-center min-h-[160px]">
+                  <View className="w-16 h-16 bg-secondary-50 rounded-full items-center justify-center mb-3">
+                    <Ionicons name="location-outline" size={32} color="#94a3b8" />
+                  </View>
+                  <Text className="text-secondary-500 font-medium text-center mb-1">
+                    No donations nearby
+                  </Text>
+                  <Text className="text-secondary-400 text-xs text-center max-w-[200px]">
+                    Check back later or submit a request
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>

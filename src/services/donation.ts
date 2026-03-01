@@ -20,7 +20,17 @@ import { Donation, DonationStatus, Location } from '../config/types';
 /**
  * Create a new donation
  */
-export const createDonation = async (donationData: Omit<Donation, 'id' | 'createdAt' | 'status'>): Promise<string> => {
+export const createDonation = async (donationData: {
+  title: string;
+  description: string;
+  category: string;
+  quantity: number;
+  batchNo?: string;
+  manufacturer?: string;
+  expiryDate?: Date;
+  mrp?: number;
+  photos?: string[];
+}): Promise<string> => {
   const currentUser = auth.currentUser;
   if (!currentUser) {
     throw new Error('User must be authenticated to create donations');

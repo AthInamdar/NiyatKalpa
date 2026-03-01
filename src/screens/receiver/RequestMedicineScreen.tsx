@@ -27,6 +27,7 @@ export default function RequestMedicineScreen({ navigation }: any) {
 
   // Form fields
   const [medicineName, setMedicineName] = useState('');
+  const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState('');
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
   const [reason, setReason] = useState('');
@@ -36,11 +37,11 @@ export default function RequestMedicineScreen({ navigation }: any) {
    */
   const handleSubmit = async () => {
     // Validation
-    if (!medicineName || !quantity || !reason) {
+    if (!medicineName || !quantity || !reason || !category) {
       Toast.show({
         type: 'error',
         text1: 'Missing Fields',
-        text2: 'Please fill in all required fields',
+        text2: 'Please fill in all required fields including category',
       });
       return;
     }
@@ -70,11 +71,13 @@ export default function RequestMedicineScreen({ navigation }: any) {
 
       // Submit to Firestore
       await createRequest({
-        medicineName: medicineName.trim(),
-        quantity: parseInt(quantity),
+        title: medicineName.trim(), // Changed from medicineName to title per rules
+        description: reason.trim(), // Required per rules
+        category: category.trim(), // Required per rules
+        quantityNeeded: parseInt(quantity), // Changed from quantity to quantityNeeded per rules
         urgency,
         reason: reason.trim(),
-        ngoName: user?.displayName || user?.email || 'Anonymous NGO',
+        ngoName: user?.name || user?.email || 'Anonymous NGO', // Changed from displayName to name
         geo: {
           lat: location.lat,
           lng: location.lng,
@@ -155,6 +158,20 @@ export default function RequestMedicineScreen({ navigation }: any) {
                 placeholder="e.g., Paracetamol 500mg"
                 value={medicineName}
                 onChangeText={setMedicineName}
+                editable={!loading}
+              />
+            </View>
+
+            {/* Category */}
+            <View className="mb-5">
+              <Text className="text-sm font-semibold text-secondary-700 mb-2 ml-1">
+                Category *
+              </Text>
+              <TextInput
+                className="bg-secondary-50 border border-secondary-200 rounded-xl px-4 py-3 text-base text-secondary-900 focus:border-blue-500 focus:bg-white"
+                placeholder="e.g., Tablet, Syrup, Injection"
+                value={category}
+                onChangeText={setCategory}
                 editable={!loading}
               />
             </View>

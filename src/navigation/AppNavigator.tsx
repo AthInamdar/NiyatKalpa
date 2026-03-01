@@ -7,6 +7,14 @@ import Toast from 'react-native-toast-message';
 
 const ToastComponent = Toast as unknown as React.ComponentType<any>;
 
+// Toast configuration - auto hide after 1 second
+const toastConfig = {
+  visibilityTime: 1000, // 1 second
+  autoHide: true,
+  topOffset: 60,
+  bottomOffset: 40,
+};
+
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -47,7 +55,7 @@ export default function AppNavigator() {
             </>
           )}
         </Stack.Navigator>
-        <ToastComponent />
+        <ToastComponent config={toastConfig} />
       </View>
     </NavigationContainer>
   );

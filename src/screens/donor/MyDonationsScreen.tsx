@@ -135,9 +135,9 @@ export default function MyDonationsScreen({ navigation }: any) {
   return (
     <View className="flex-1 bg-secondary-50">
       {/* Header Background */}
-      <View className="absolute top-0 w-full h-[25%] bg-blue-600 rounded-b-[40px] overflow-hidden">
+      <View className="absolute top-0 w-full h-[25%] bg-primary-700 rounded-b-[40px] overflow-hidden">
         <LinearGradient
-          colors={['#2563eb', '#3b82f6']}
+          colors={['#0f766e', '#14b8a6']}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -162,7 +162,7 @@ export default function MyDonationsScreen({ navigation }: any) {
 
         {loading ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#0d9488" />
             <Text className="text-secondary-500 mt-4 font-medium">Loading donations...</Text>
           </View>
         ) : (
@@ -186,7 +186,7 @@ export default function MyDonationsScreen({ navigation }: any) {
                   You haven't made any donations yet.{"\n"}Start by uploading your first medicine donation!
                 </Text>
                 <TouchableOpacity
-                  className="mt-8 bg-emerald-600 px-8 py-3 rounded-xl shadow-lg shadow-emerald-500/30"
+                  className="mt-8 bg-primary-600 px-8 py-3 rounded-xl shadow-lg shadow-primary-500/30"
                   onPress={() => navigation.navigate('UploadMedicine')}
                 >
                   <Text className="text-white font-bold text-base">Donate Now</Text>

@@ -49,6 +49,7 @@ export const extractMedicineDetails = async (
 From the FRONT image:
 - Medicine name (including dosage/strength)
 - Company/Manufacturer name
+- Medicine type (e.g., Tablet, Capsule, Syrup, Injection, Cream, etc.)
 
 From the LABEL image (if provided):
 - Batch number (look for "Batch No", "Batch", "Lot No", etc.)
@@ -60,6 +61,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no code 
 {
   "name": "medicine name with dosage",
   "manufacturer": "company name",
+  "type": "medicine type",
   "batchNo": "batch number",
   "mfdDate": "MM/YYYY",
   "expiryDate": "MM/YYYY",
@@ -168,6 +170,7 @@ const parseGeminiResponse = (text: string): ParsedFields => {
     const final: ParsedFields = {
       name,
       manufacturer,
+      type: parsed.type || undefined,
       batchNo: normalized.batchNo || prelim.batchNo,
       mfdDate: normalized.mfdDate || prelim.mfdDate,
       expiryDate: normalized.expiryDate || prelim.expiryDate,

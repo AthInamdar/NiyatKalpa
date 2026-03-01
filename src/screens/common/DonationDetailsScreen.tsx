@@ -114,7 +114,7 @@ export default function DonationDetailsScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View className="flex-1 bg-secondary-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#0d9488" />
         <Text className="text-secondary-500 mt-4 font-medium">Loading donation details...</Text>
       </View>
     );
@@ -130,7 +130,7 @@ export default function DonationDetailsScreen({ route, navigation }: any) {
           Donation Not Found
         </Text>
         <TouchableOpacity
-          className="bg-blue-600 rounded-xl px-8 py-3 mt-4 shadow-lg shadow-blue-500/30"
+          className="bg-primary-600 rounded-xl px-8 py-3 mt-4 shadow-lg shadow-primary-500/30"
           onPress={() => navigation.goBack()}
         >
           <Text className="text-white font-bold">Go Back</Text>
@@ -144,9 +144,9 @@ export default function DonationDetailsScreen({ route, navigation }: any) {
       <StatusBar barStyle="light-content" />
 
       {/* Header Background */}
-      <View className="absolute top-0 w-full h-[30%] bg-blue-600 rounded-b-[40px] overflow-hidden z-0">
+      <View className="absolute top-0 w-full h-[30%] bg-primary-700 rounded-b-[40px] overflow-hidden z-0">
         <LinearGradient
-          colors={['#2563eb', '#3b82f6']}
+          colors={['#0f766e', '#14b8a6']}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -204,7 +204,7 @@ export default function DonationDetailsScreen({ route, navigation }: any) {
             {/* Medicine Name & Expiry */}
             <View className="mb-8">
               <Text className="text-3xl font-bold text-secondary-900 mb-2">
-                {donation.name}
+                {donation.title || donation.name || "Medicine Name"}
               </Text>
 
               <View className={`flex-row items-center self-start px-3 py-1.5 rounded-lg ${getDaysUntilExpiry(donation.expiryDate).includes('Expired') ? 'bg-red-50' : 'bg-orange-50'
@@ -346,7 +346,7 @@ export default function DonationDetailsScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              className="bg-blue-600 rounded-xl py-4 items-center shadow-lg shadow-blue-500/30"
+              className="bg-primary-600 rounded-xl py-4 items-center shadow-lg shadow-primary-500/30"
               onPress={handleRequestMedicine}
             >
               <Text className="text-white font-bold text-lg tracking-wide">Request Medicine</Text>

@@ -14,8 +14,6 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, onPress, showStatus 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return '#10b981';
-      case 'matched': return '#3b82f6';
-      case 'confirmed': return '#8b5cf6';
       case 'fulfilled': return '#059669';
       case 'cancelled': return '#ef4444';
       default: return '#6b7280';
@@ -49,12 +47,12 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, onPress, showStatus 
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Ionicons 
-            name={getUrgencyIcon(request.urgency)} 
+            name={getUrgencyIcon(request.urgency || 'medium')} 
             size={24} 
-            color={getUrgencyColor(request.urgency)} 
+            color={getUrgencyColor(request.urgency || 'medium')} 
           />
           <Text style={styles.medicineName} numberOfLines={1}>
-            {request.medicineName}
+            {request.title}
           </Text>
         </View>
         
@@ -69,11 +67,11 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, onPress, showStatus 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
             <Ionicons name="cube-outline" size={16} color="#6b7280" />
-            <Text style={styles.infoText}>Quantity: {request.quantity}</Text>
+            <Text style={styles.infoText}>Quantity: {request.quantityNeeded}</Text>
           </View>
           
-          <View style={[styles.urgencyBadge, { backgroundColor: getUrgencyColor(request.urgency) }]}>
-            <Text style={styles.urgencyText}>{request.urgency} priority</Text>
+          <View style={[styles.urgencyBadge, { backgroundColor: getUrgencyColor(request.urgency || 'medium') }]}>
+            <Text style={styles.urgencyText}>{request.urgency || 'medium'} priority</Text>
           </View>
         </View>
 

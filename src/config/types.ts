@@ -28,52 +28,50 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 // Donation types
-export const DonationStatusSchema = z.enum(['available', 'matched', 'confirmed', 'in_transit', 'delivered', 'cancelled']);
+export const DonationStatusSchema = z.enum(['available', 'reserved', 'completed', 'cancelled']);
 export type DonationStatus = z.infer<typeof DonationStatusSchema>;
 
 export const DonationSchema = z.object({
   id: z.string(),
-  name: z.string(),
-  batchNo: z.string(),
-  manufacturer: z.string(),
-  expiryDate: z.instanceof(Timestamp),
-  mfgDate: z.string().optional(), // Manufacturing date in MM/YYYY format
-  mrp: z.number().optional(), // Maximum Retail Price
-  quantity: z.number(),
-  photos: z.array(z.string()),
-  frontPhoto: z.string().optional(), // Front image showing medicine name & brand
-  expiryLabelPhoto: z.string().optional(), // Label image showing batch, MFG, EXP, MRP
   donorId: z.string(),
-  donorName: z.string(),
-  donorType: z.string().optional(), // company, pharmacy, individual
-  geo: LocationSchema,
-  createdAt: z.instanceof(Timestamp),
+  title: z.string(), // Medicine name (renamed from 'name' to match rules)
+  description: z.string(), // Required per rules
+  category: z.string(), // Medicine category (required per rules)
+  quantity: z.number(),
   status: DonationStatusSchema,
-  description: z.string().optional(),
+  createdAt: z.instanceof(Timestamp),
+  // Optional extra fields (not enforced by rules but used by app)
+  batchNo: z.string().optional(),
+  manufacturer: z.string().optional(),
+  expiryDate: z.instanceof(Timestamp).optional(),
+  mrp: z.number().optional(),
+  photos: z.array(z.string()).optional(),
+  donorName: z.string().optional(),
+  geo: LocationSchema.optional(),
   matchedNgoId: z.string().optional(),
   matchedNgoName: z.string().optional(),
-  matchScore: z.number().optional(), // AI matching score
-  urgency: z.enum(['low', 'medium', 'high']).optional(),
 });
 export type Donation = z.infer<typeof DonationSchema>;
 
 // NGO Request types
-export const RequestStatusSchema = z.enum(['open', 'matched', 'confirmed', 'fulfilled', 'cancelled']);
+export const RequestStatusSchema = z.enum(['open', 'fulfilled', 'cancelled']);
 export type RequestStatus = z.infer<typeof RequestStatusSchema>;
 
 export const MedicineRequestSchema = z.object({
   id: z.string(),
   ngoId: z.string(),
-  ngoName: z.string(),
-  medicineName: z.string(),
-  quantity: z.number(),
-  urgency: z.enum(['low', 'medium', 'high']),
-  reason: z.string(),
-  geo: LocationSchema,
+  title: z.string(), // Medicine name (renamed from 'medicineName' to match rules)
+  description: z.string(), // Required per rules
+  category: z.string(), // Medicine category (required per rules)
+  quantityNeeded: z.number(), // Renamed from 'quantity' to match rules
   status: RequestStatusSchema,
-  matchedDonationId: z.string().optional(),
   createdAt: z.instanceof(Timestamp),
-  expiresAt: z.instanceof(Timestamp).optional(),
+  // Optional extra fields (not enforced by rules but used by app)
+  ngoName: z.string().optional(),
+  urgency: z.enum(['low', 'medium', 'high']).optional(),
+  reason: z.string().optional(),
+  geo: LocationSchema.optional(),
+  matchedDonationId: z.string().optional(),
 });
 export type MedicineRequest = z.infer<typeof MedicineRequestSchema>;
 
@@ -105,6 +103,7 @@ export const ParsedFieldsSchema = z.object({
   expiryDate: z.string().optional(),
   mrp: z.number().optional(),
   mfdDate: z.string().optional(),
+  type: z.string().optional(),
 });
 export type ParsedFields = z.infer<typeof ParsedFieldsSchema>;
 
@@ -119,22 +118,34 @@ export type PriceAdvice = z.infer<typeof PriceAdviceSchema>;
 
 // Form schemas
 export const DonationUploadFormSchema = z.object({
-  name: z.string().min(1, 'Medicine name is required'),
-  batchNo: z.string().min(1, 'Batch number is required'),
-  manufacturer: z.string().min(1, 'Manufacturer is required'),
-  expiryDate: z.string().min(1, 'Expiry date is required'),
+  title: z.string().min(1, 'Medicine name is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().min(1, 'Category is required'),
   quantity: z.number().min(1, 'Quantity must be at least 1'),
-  description: z.string().optional(),
-  urgency: z.enum(['low', 'medium', 'high']).default('medium'),
+  // Optional fields for additional details
+  batchNo: z.string().optional(),
+  manufacturer: z.string().optional(),
+  expiryDate: z.string().optional().refine((dateStr) => {
+    if (!dateStr) return true; // Optional field, skip if empty
+    const today = new Date();
+    const expiry = new Date(dateStr);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 60;
+  }, "Expiry date must be at least 2 months (60 days) from today"),
+  mrp: z.number().optional(),
   declaration: z.boolean().refine(val => val === true, 'You must confirm the declaration'),
 });
 export type DonationUploadForm = z.infer<typeof DonationUploadFormSchema>;
 
 export const RequestFormSchema = z.object({
-  medicineName: z.string().min(1, 'Medicine name is required'),
-  quantity: z.number().min(1, 'Quantity must be at least 1'),
-  urgency: z.enum(['low', 'medium', 'high']),
-  reason: z.string().min(10, 'Please provide a detailed reason'),
+  title: z.string().min(1, 'Medicine name is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().min(1, 'Category is required'),
+  quantityNeeded: z.number().min(1, 'Quantity must be at least 1'),
+  // Optional fields
+  urgency: z.enum(['low', 'medium', 'high']).optional(),
+  reason: z.string().min(10, 'Please provide a detailed reason').optional(),
 });
 export type RequestForm = z.infer<typeof RequestFormSchema>;
 
@@ -142,7 +153,13 @@ export const MedicineUploadFormSchema = z.object({
   name: z.string().min(1, 'Medicine name is required'),
   batchNo: z.string().min(1, 'Batch number is required'),
   manufacturer: z.string().min(1, 'Manufacturer is required'),
-  expiryDate: z.string().min(1, 'Expiry date is required'),
+  expiryDate: z.string().min(1, 'Expiry date is required').refine((dateStr) => {
+    const today = new Date();
+    const expiry = new Date(dateStr);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 60;
+  }, "Expiry date must be at least 2 months (60 days) from today"),
   mrp: z.number().min(0, 'MRP must be positive'),
   quantity: z.number().min(1, 'Quantity must be at least 1'),
   description: z.string().optional(),

@@ -8,11 +8,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signOut } from 'firebase/auth';
-import { auth } from '../../services/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import Toast from 'react-native-toast-message';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { geohashForLocation } from 'geofire-common';
 
 /**
  * ProfileScreen Component
@@ -52,6 +55,53 @@ export default function ProfileScreen({ navigation }: any) {
       ],
       { cancelable: true }
     );
+  };
+
+  const updateLocation = async () => {
+    if (!user?.uid) return;
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Allow location access to update your location.',
+        });
+        return;
+      }
+
+      Toast.show({
+        type: 'info',
+        text1: 'Updating Location',
+        text2: 'Fetching GPS coordinates...',
+      });
+
+      const location = await Location.getCurrentPositionAsync({});
+      const lat = location.coords.latitude;
+      const lng = location.coords.longitude;
+      const processGeohash = geohashForLocation([lat, lng]);
+
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        'location.lat': lat,
+        'location.lng': lng,
+        'location.geohash': processGeohash
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Location Updated',
+        text2: 'Your location has been updated successfully.',
+      });
+    } catch (error) {
+      console.error('Location update error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: 'Could not update location.',
+      });
+    }
   };
 
   const getRoleBadgeColor = (role?: string) => {
@@ -117,7 +167,7 @@ export default function ProfileScreen({ navigation }: any) {
               </Text>
             </View>
             <Text className="text-2xl font-bold text-white mb-1 tracking-tight">
-              {user?.displayName || 'User'}
+              {user?.name || 'User'}
             </Text>
             <Text className="text-blue-100 mb-4 font-medium">{user?.email}</Text>
 
@@ -186,19 +236,22 @@ export default function ProfileScreen({ navigation }: any) {
                 <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-row items-center p-4 border-b border-secondary-50">
+              <TouchableOpacity
+                className="flex-row items-center p-4 border-b border-secondary-50"
+                onPress={updateLocation}
+              >
                 <View className="w-10 h-10 bg-purple-50 rounded-full items-center justify-center mr-4">
                   <Ionicons name="location-outline" size={20} color="#9333ea" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-base text-secondary-900 font-bold">
-                    Location Settings
+                    Update Location
                   </Text>
                   <Text className="text-xs text-secondary-500">
-                    Manage your location
+                    Use current GPS location
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+                <Ionicons name="refresh-outline" size={20} color="#94a3b8" />
               </TouchableOpacity>
 
               <TouchableOpacity className="flex-row items-center p-4 border-b border-secondary-50">

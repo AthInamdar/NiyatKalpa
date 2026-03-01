@@ -40,6 +40,15 @@ export default function DonorHomeScreen({ navigation }: any) {
       enabled: true,
     },
     {
+      title: 'Receiver Requests',
+      description: 'See what is needed',
+      icon: 'search',
+      onPress: () => navigation.navigate('BrowseRequests'),
+      color: 'bg-emerald-50',
+      iconColor: '#059669',
+      enabled: true,
+    },
+    {
       title: 'Map View',
       description: 'Find nearby centers',
       icon: 'map',
@@ -83,7 +92,7 @@ export default function DonorHomeScreen({ navigation }: any) {
                   Welcome Back,
                 </Text>
                 <Text className="text-white text-2xl font-bold tracking-tight">
-                  {user?.displayName || 'Donor'} 👋
+                  {user?.name || 'Donor'} 👋
                 </Text>
               </View>
               <View className="flex-row items-center gap-3">

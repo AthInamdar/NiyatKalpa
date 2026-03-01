@@ -11,6 +11,7 @@ import AdminHomeScreen from '../screens/home/AdminHomeScreen';
 // Donor Screens
 import UploadMedicineScreen from '../screens/donor/UploadMedicineScreen';
 import MyDonationsScreen from '../screens/donor/MyDonationsScreen';
+import BrowseRequestsScreen from '../screens/donor/BrowseRequestsScreen';
 
 // Receiver Screens
 import RequestMedicineScreen from '../screens/receiver/RequestMedicineScreen';
@@ -26,6 +27,7 @@ import ProfileScreen from '../screens/common/ProfileScreen';
 import MapScreen from '../screens/common/MapScreen';
 import DonationDetailsScreen from '../screens/common/DonationDetailsScreen';
 import RequestDetailsScreen from '../screens/common/RequestDetailsScreen';
+import ChatScreen from '../screens/common/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -73,6 +75,11 @@ function HomeStack() {
         options={{ title: 'My Donations' }}
       />
       <Stack.Screen
+        name="BrowseRequests"
+        component={BrowseRequestsScreen}
+        options={{ title: 'Receiver Requests' }}
+      />
+      <Stack.Screen
         name="MyRequests"
         component={MyRequestsScreen}
         options={{ title: 'My Requests' }}
@@ -101,6 +108,11 @@ function HomeStack() {
         name="VerifyUsers"
         component={VerifyUsersScreen}
         options={{ title: 'Verify Users' }}
+      />
+      <Stack.Screen
+        name="ChatScreen"
+        component={ChatScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

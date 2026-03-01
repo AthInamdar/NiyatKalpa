@@ -51,14 +51,18 @@ export default function AvailableDonationsScreen({ navigation }: any) {
         ...doc.data(),
       })) as Donation[];
 
-      // Filter donations that have location
-      donationsList = donationsList.filter(d => d.geo && d.geo.lat && d.geo.lng);
-
-      // Add distance and sort by distance if user location available
+      // Add distance and sort by distance if user location and item location available
       if (location && donationsList.length > 0) {
-        // @ts-ignore - addDistanceToItems adds properties that might not be in Donation type strictly
-        donationsList = addDistanceToItems(donationsList, location.lat, location.lng);
-        donationsList = sortByDistance(donationsList, location.lat, location.lng);
+        // Only process items that have geo data for distance
+        const itemsWithGeo = donationsList.filter(d => d.geo && d.geo.lat && d.geo.lng);
+        const itemsWithoutGeo = donationsList.filter(d => !d.geo || !d.geo.lat || !d.geo.lng);
+
+        if (itemsWithGeo.length > 0) {
+          // @ts-ignore - use any to avoid strict type mismatch with Location interface
+          let processed = addDistanceToItems(itemsWithGeo as any, location.lat, location.lng);
+          processed = sortByDistance(processed as any, location.lat, location.lng);
+          donationsList = [...processed, ...itemsWithoutGeo] as any[];
+        }
       }
 
       setDonations(donationsList);
@@ -162,11 +166,18 @@ export default function AvailableDonationsScreen({ navigation }: any) {
 
       {/* Medicine Name */}
       <View className="flex-row justify-between items-start mb-2">
-        <Text className="text-lg font-bold text-secondary-900 flex-1 mr-2" numberOfLines={1}>
-          {item.name || 'Medicine Name'}
-        </Text>
-        <View className="bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
-          <Text className="text-emerald-700 text-xs font-bold">Available</Text>
+        <View className="flex-1 mr-2">
+          <Text className="text-lg font-bold text-secondary-900 mb-1" numberOfLines={1}>
+            {item.title || item.name || 'Medicine Name'}
+          </Text>
+          <View className="flex-row">
+            <View className="bg-primary-50 px-2 py-0.5 rounded mr-2">
+              <Text className="text-[10px] text-primary-700 font-bold uppercase">{item.category || 'Medicine'}</Text>
+            </View>
+          </View>
+        </View>
+        <View className="bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+          <Text className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider">Available</Text>
         </View>
       </View>
 
@@ -189,8 +200,8 @@ export default function AvailableDonationsScreen({ navigation }: any) {
       {/* Donor Info & Distance */}
       <View className="border-t border-secondary-100 pt-3 flex-row justify-between items-center">
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-2">
-            <Ionicons name="person" size={14} color="#2563eb" />
+          <View className="w-8 h-8 bg-primary-50 rounded-full items-center justify-center mr-2">
+            <Ionicons name="person" size={14} color="#0d9488" />
           </View>
           <View>
             <Text className="text-[10px] text-secondary-400 font-medium uppercase tracking-wider">Donor</Text>
@@ -202,8 +213,8 @@ export default function AvailableDonationsScreen({ navigation }: any) {
 
         {item.distanceText && (
           <View className="flex-row items-center bg-secondary-50 px-3 py-1.5 rounded-full">
-            <Ionicons name="location-sharp" size={14} color="#2563eb" style={{ marginRight: 4 }} />
-            <Text className="text-xs text-blue-700 font-bold">
+            <Ionicons name="location-sharp" size={14} color="#0d9488" style={{ marginRight: 4 }} />
+            <Text className="text-xs text-primary-700 font-bold">
               {item.distanceText}
             </Text>
           </View>
@@ -212,16 +223,10 @@ export default function AvailableDonationsScreen({ navigation }: any) {
 
       {/* Action Button */}
       <TouchableOpacity
-        className="bg-blue-600 rounded-xl py-3 mt-4 items-center shadow-lg shadow-blue-500/20"
-        onPress={() => {
-          Toast.show({
-            type: 'info',
-            text1: 'Request Feature',
-            text2: 'Request functionality coming soon',
-          });
-        }}
+        className="bg-primary-600 rounded-xl py-3 mt-4 items-center shadow-lg shadow-primary-500/20"
+        onPress={() => handleDonationPress(item)}
       >
-        <Text className="text-white font-bold tracking-wide">Request Medicine</Text>
+        <Text className="text-white font-bold tracking-wide">View Details</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -241,7 +246,7 @@ export default function AvailableDonationsScreen({ navigation }: any) {
         There are no medicine donations available nearby at the moment. Check back later!
       </Text>
       <TouchableOpacity
-        className="bg-blue-600 rounded-xl px-8 py-3 shadow-lg shadow-blue-500/30"
+        className="bg-primary-600 rounded-xl px-8 py-3 shadow-lg shadow-primary-500/30"
         onPress={handleRefresh}
       >
         <Text className="text-white font-bold text-base">Refresh List</Text>
@@ -254,9 +259,9 @@ export default function AvailableDonationsScreen({ navigation }: any) {
       <StatusBar barStyle="light-content" />
 
       {/* Header Background */}
-      <View className="absolute top-0 w-full h-[25%] bg-blue-600 rounded-b-[40px] overflow-hidden">
+      <View className="absolute top-0 w-full h-[25%] bg-primary-700 rounded-b-[40px] overflow-hidden">
         <LinearGradient
-          colors={['#2563eb', '#3b82f6']}
+          colors={['#0f766e', '#14b8a6']}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -279,7 +284,7 @@ export default function AvailableDonationsScreen({ navigation }: any) {
               <Text className="text-2xl font-bold text-white tracking-tight">
                 Donations
               </Text>
-              <Text className="text-blue-100 text-xs font-medium">
+              <Text className="text-primary-100 text-xs font-medium">
                 {donations.length} items nearby
               </Text>
             </View>
@@ -295,7 +300,7 @@ export default function AvailableDonationsScreen({ navigation }: any) {
 
         {loading ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#0d9488" />
             <Text className="text-secondary-500 mt-4 font-medium">Finding nearby donations...</Text>
           </View>
         ) : (
